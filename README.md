@@ -50,6 +50,11 @@ Tokmon reads Claude Code's local JSONL session files and gives you a clear pictu
 
 Download the latest DMG from [Releases](https://github.com/learningpro/Tokmon/releases), open it, and drag Tokmon to Applications.
 
+> **Note:** Since the app is not signed with an Apple Developer certificate, macOS may show a "damaged" warning. Run this in Terminal to fix it:
+> ```bash
+> xattr -cr /Applications/Tokmon.app
+> ```
+
 ## Build from Source
 
 ```bash
