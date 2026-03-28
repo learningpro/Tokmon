@@ -4,7 +4,6 @@ struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var l10n: L10n
     @AppStorage("claudeDataPath") private var claudeDataPath = "~/.claude/projects"
-    @AppStorage("appearanceMode") private var appearanceMode: AppearanceMode = .system
 
     @State private var editingPrices: [String: ModelPricing.Price] = [:]
     @State private var newModelName = ""
@@ -12,146 +11,150 @@ struct SettingsView: View {
     @State private var selectedLang: String = ""
 
     var body: some View {
-        Form {
-            Section(l10n.t("Data Source")) {
-                TextField(l10n.t("Claude Data Path"), text: $claudeDataPath)
-                    .textFieldStyle(.roundedBorder)
-                HStack {
-                    Text(NSString(string: claudeDataPath).expandingTildeInPath)
-                        .font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Button(l10n.t("Reload Data")) {
-                        appState.claudeDataPath = claudeDataPath
-                        Task { await appState.loadData() }
-                    }
-                }
-            }
+        ScrollView {
+            VStack(spacing: 20) {
+                Text(l10n.t("Settings"))
+                    .font(.largeTitle).fontWeight(.bold).foregroundStyle(Theme.textPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            Section(l10n.t("Appearance")) {
-                Picker(l10n.t("Theme"), selection: $appearanceMode) {
-                    Text(l10n.t("System")).tag(AppearanceMode.system)
-                    Text(l10n.t("Light")).tag(AppearanceMode.light)
-                    Text(l10n.t("Dark")).tag(AppearanceMode.dark)
-                }
-                .pickerStyle(.segmented)
-            }
-
-            Section(l10n.t("Language")) {
-                HStack {
-                    Picker(l10n.t("Language"), selection: $selectedLang) {
-                        ForEach(AppLanguage.allCases) { lang in
-                            Text(lang.rawValue).tag(lang.rawValue)
+                // Data Source
+                settingsCard(title: l10n.t("Data Source")) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(l10n.t("Claude Data Path")).font(.caption).foregroundStyle(Theme.textTertiary)
+                        HStack {
+                            TextField("", text: $claudeDataPath)
+                                .textFieldStyle(.roundedBorder)
+                            Button(l10n.t("Reload Data")) {
+                                appState.claudeDataPath = claudeDataPath
+                                Task { await appState.loadData() }
+                            }
+                            .buttonStyle(.borderedProminent)
                         }
+                        Text(NSString(string: claudeDataPath).expandingTildeInPath)
+                            .font(.caption2).foregroundStyle(Theme.textTertiary)
                     }
-                    .pickerStyle(.segmented)
-
-                    Button(l10n.t("Save & Apply")) {
-                        l10n.lang = selectedLang
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(selectedLang == l10n.lang)
-                }
-            }
-
-            Section {
-                ForEach(Array(editingPrices.keys.sorted()), id: \.self) { model in
-                    EditablePricingRow(model: model, price: binding(for: model), l10n: l10n)
                 }
 
-                if showingAddModel {
+                // Appearance & Language
+                settingsCard(title: l10n.t("Language")) {
                     HStack {
-                        TextField("Model name (e.g. gpt-4o)", text: $newModelName)
-                            .textFieldStyle(.roundedBorder)
-                        Button(l10n.t("Add")) {
-                            if !newModelName.isEmpty {
-                                editingPrices[newModelName] = ModelPricing.defaultPrice
-                                newModelName = ""
-                                showingAddModel = false
-                                saveAllPrices()
+                        Picker(l10n.t("Language"), selection: $selectedLang) {
+                            ForEach(AppLanguage.allCases) { lang in
+                                Text(lang.rawValue).tag(lang.rawValue)
                             }
                         }
+                        .pickerStyle(.segmented)
+
+                        Button(l10n.t("Save & Apply")) {
+                            l10n.lang = selectedLang
+                        }
                         .buttonStyle(.borderedProminent)
-                        Button(l10n.t("Cancel")) {
-                            showingAddModel = false
-                            newModelName = ""
+                        .disabled(selectedLang == l10n.lang)
+                    }
+                }
+
+                // Model Pricing
+                settingsCard(title: l10n.t("Model Pricing (USD per 1M tokens)")) {
+                    VStack(spacing: 16) {
+                        ForEach(Array(editingPrices.keys.sorted()), id: \.self) { model in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(model).fontWeight(.medium).foregroundStyle(Theme.textPrimary)
+                                HStack(spacing: 12) {
+                                    priceField(l10n.t("Input"), value: bindingFor(model, keyPath: \.inputPerMillion))
+                                    priceField(l10n.t("Output"), value: bindingFor(model, keyPath: \.outputPerMillion))
+                                    priceField(l10n.t("Cache Write"), value: bindingFor(model, keyPath: \.cacheWritePerMillion))
+                                    priceField(l10n.t("Cache Read"), value: bindingFor(model, keyPath: \.cacheReadPerMillion))
+                                }
+                                Divider().overlay(Theme.cardBorder)
+                            }
+                        }
+
+                        if showingAddModel {
+                            HStack {
+                                TextField("Model name (e.g. gpt-4o)", text: $newModelName)
+                                    .textFieldStyle(.roundedBorder)
+                                Button(l10n.t("Add")) {
+                                    if !newModelName.isEmpty {
+                                        editingPrices[newModelName] = ModelPricing.defaultPrice
+                                        newModelName = ""
+                                        showingAddModel = false
+                                        saveAllPrices()
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                Button(l10n.t("Cancel")) {
+                                    showingAddModel = false; newModelName = ""
+                                }
+                            }
+                        }
+
+                        HStack {
+                            Button(l10n.t("Add Model")) { showingAddModel = true }
+                                .foregroundStyle(Theme.accentBlue)
+                            Spacer()
+                            Button(l10n.t("Reset to Defaults")) {
+                                ModelPricing.resetToDefaults()
+                                loadPrices()
+                            }
+                            .foregroundStyle(.red)
                         }
                     }
                 }
 
-                HStack {
-                    Button(l10n.t("Add Model")) { showingAddModel = true }
-                    Spacer()
-                    Button(l10n.t("Reset to Defaults")) {
-                        ModelPricing.resetToDefaults()
-                        loadPrices()
+                // About
+                settingsCard(title: l10n.t("About")) {
+                    HStack {
+                        Text("Tokmon").fontWeight(.medium).foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Text("v1.0.0").foregroundStyle(Theme.textTertiary)
                     }
-                    .foregroundStyle(.red)
-                }
-            } header: {
-                Text(l10n.t("Model Pricing (USD per 1M tokens)"))
-            }
-
-            Section(l10n.t("About")) {
-                HStack {
-                    Text("Tokmon").fontWeight(.medium)
-                    Spacer()
-                    Text("v1.0.0").foregroundStyle(.secondary)
                 }
             }
+            .padding(24)
         }
-        .formStyle(.grouped)
-        .frame(minWidth: 550, minHeight: 500)
+        .background(Theme.mainBg)
         .onAppear {
             loadPrices()
             selectedLang = l10n.lang
         }
     }
 
-    private func loadPrices() { editingPrices = ModelPricing.prices }
-
-    private func saveAllPrices() {
-        for (model, price) in editingPrices {
-            ModelPricing.savePrice(for: model, price: price)
+    func settingsCard(title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.headline).foregroundStyle(Theme.textPrimary)
+            content()
         }
-    }
-
-    private func binding(for model: String) -> Binding<ModelPricing.Price> {
-        Binding(
-            get: { editingPrices[model] ?? ModelPricing.defaultPrice },
-            set: { newValue in
-                editingPrices[model] = newValue
-                ModelPricing.savePrice(for: model, price: newValue)
-            }
-        )
-    }
-}
-
-struct EditablePricingRow: View {
-    let model: String
-    @Binding var price: ModelPricing.Price
-    let l10n: L10n
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(model).fontWeight(.medium)
-            HStack(spacing: 12) {
-                priceField(l10n.t("Input"), value: $price.inputPerMillion)
-                priceField(l10n.t("Output"), value: $price.outputPerMillion)
-                priceField(l10n.t("Cache Write"), value: $price.cacheWritePerMillion)
-                priceField(l10n.t("Cache Read"), value: $price.cacheReadPerMillion)
-            }
-        }
-        .padding(.vertical, 4)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     func priceField(_ label: String, value: Binding<Double>) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(label).font(.caption2).foregroundStyle(Theme.textTertiary)
             TextField("", value: value, format: .number.precision(.fractionLength(2)))
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 80)
                 .monospacedDigit()
         }
+    }
+
+    private func loadPrices() { editingPrices = ModelPricing.prices }
+
+    private func saveAllPrices() {
+        for (model, price) in editingPrices { ModelPricing.savePrice(for: model, price: price) }
+    }
+
+    private func bindingFor(_ model: String, keyPath: WritableKeyPath<ModelPricing.Price, Double>) -> Binding<Double> {
+        Binding(
+            get: { editingPrices[model]?[keyPath: keyPath] ?? 0 },
+            set: { newValue in
+                editingPrices[model]?[keyPath: keyPath] = newValue
+                if let price = editingPrices[model] { ModelPricing.savePrice(for: model, price: price) }
+            }
+        )
     }
 }
 
