@@ -8,7 +8,6 @@ struct SessionDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Back button + title
                 HStack {
                     Button(action: onBack) {
                         HStack(spacing: 4) {
@@ -17,33 +16,30 @@ struct SessionDetailView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Theme.accentBlue)
+
+                    Text("Session Detail")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Theme.textPrimary)
 
                     Spacer()
                 }
 
-                // Session metadata header
                 sessionHeader
-
-                // Charts row
                 HStack(alignment: .top, spacing: 16) {
-                    // Token timeline
-                    tokenTimelineChart
-                        .frame(maxWidth: .infinity)
-
-                    // Right panel
+                    tokenTimelineChart.frame(maxWidth: .infinity)
                     VStack(spacing: 16) {
                         tokenBreakdown
                         modelsUsedView
                     }
                     .frame(width: 260)
                 }
-
-                // Activity log
                 activityLog
             }
-            .padding()
+            .padding(24)
         }
+        .background(Theme.mainBg)
     }
 
     // MARK: - Session Header
@@ -52,19 +48,14 @@ struct SessionDetailView: View {
         VStack(spacing: 12) {
             HStack {
                 Text(String(session.id.prefix(18)))
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .monospaced()
-
+                    .font(.title2).fontWeight(.bold).monospaced()
+                    .foregroundStyle(Theme.textPrimary)
                 Spacer()
-
                 Text("Completed")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.green.opacity(0.2))
-                    .foregroundStyle(.green)
+                    .font(.caption).fontWeight(.medium)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(Theme.accentGreen.opacity(0.2))
+                    .foregroundStyle(Theme.accentGreen)
                     .clipShape(Capsule())
             }
 
@@ -78,28 +69,22 @@ struct SessionDetailView: View {
                     metadataItem(icon: "timer", label: "Duration", value: formatDuration(duration))
                 }
                 metadataItem(icon: "dollarsign.circle.fill", label: "Total Cost", value: String(format: "$%.2f", session.totalCost))
-
                 Spacer()
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     func metadataItem(icon: String, label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(label)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Image(systemName: icon).font(.caption).foregroundStyle(Theme.textTertiary)
+                Text(label).font(.caption).foregroundStyle(Theme.textTertiary)
             }
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
+            Text(value).font(.subheadline).fontWeight(.medium).foregroundStyle(Theme.textPrimary)
         }
     }
 
@@ -107,78 +92,90 @@ struct SessionDetailView: View {
 
     var tokenTimelineChart: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Token Consumption Over Time")
-                .font(.headline)
+            HStack {
+                Text("Token Consumption Over Time").font(.headline).foregroundStyle(Theme.textPrimary)
+                Spacer()
+                HStack(spacing: 12) {
+                    legendDot(color: Theme.accentBlue, label: "Input Tokens")
+                    legendDot(color: Theme.accentPurple, label: "Output Tokens")
+                    legendDot(color: Theme.accentTeal, label: "Cache Read")
+                }
+            }
 
             let assistantEntries = session.entries.filter { $0.type == .assistant && $0.usage != nil }
 
             if assistantEntries.isEmpty {
                 Text("No timeline data available")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .frame(height: 200)
             } else {
                 Chart {
                     ForEach(assistantEntries) { entry in
                         if let usage = entry.usage {
-                            BarMark(
-                                x: .value("Time", entry.timestamp),
-                                y: .value("Input", usage.inputTokens)
-                            )
-                            .foregroundStyle(.blue)
-
-                            BarMark(
-                                x: .value("Time", entry.timestamp),
-                                y: .value("Output", usage.outputTokens)
-                            )
-                            .foregroundStyle(.purple)
-
-                            BarMark(
-                                x: .value("Time", entry.timestamp),
-                                y: .value("Cache Read", usage.cacheReadTokens)
-                            )
-                            .foregroundStyle(.teal)
+                            AreaMark(x: .value("Time", entry.timestamp), y: .value("Cache Read", usage.cacheReadTokens))
+                                .foregroundStyle(Theme.accentTeal.opacity(0.4))
+                                .interpolationMethod(.catmullRom)
+                            AreaMark(x: .value("Time", entry.timestamp), y: .value("Input", usage.inputTokens))
+                                .foregroundStyle(Theme.accentBlue.opacity(0.4))
+                                .interpolationMethod(.catmullRom)
+                            LineMark(x: .value("Time", entry.timestamp), y: .value("Output", usage.outputTokens))
+                                .foregroundStyle(Theme.accentPurple)
+                                .interpolationMethod(.catmullRom)
+                                .lineStyle(StrokeStyle(lineWidth: 2))
                         }
                     }
                 }
-                .chartForegroundStyleScale([
-                    "Input": Color.blue,
-                    "Output": Color.purple,
-                    "Cache Read": Color.teal
-                ])
+                .chartXAxis {
+                    AxisMarks { _ in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.1))
+                        AxisValueLabel(format: .dateTime.hour().minute()).foregroundStyle(Theme.textTertiary)
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.1))
+                        AxisValueLabel { if let v = value.as(Int64.self) { Text(fmtTokens(v)).foregroundStyle(Theme.textTertiary) } }
+                    }
+                }
                 .frame(height: 220)
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    func legendDot(color: Color, label: String) -> some View {
+        HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(label).font(.caption2).foregroundStyle(Theme.textTertiary)
+        }
     }
 
     // MARK: - Token Breakdown
 
     var tokenBreakdown: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Token Breakdown")
-                .font(.headline)
+            Text("Token Breakdown").font(.headline).foregroundStyle(Theme.textPrimary)
 
-            tokenBar(label: "Input", value: session.usage.inputTokens, color: .blue)
-            tokenBar(label: "Output", value: session.usage.outputTokens, color: .purple)
-            tokenBar(label: "Cache Created", value: session.usage.cacheCreationTokens, color: .orange)
-            tokenBar(label: "Cache Read", value: session.usage.cacheReadTokens, color: .teal)
+            tokenBar(label: "Input", value: session.usage.inputTokens, color: Theme.accentBlue)
+            tokenBar(label: "Output", value: session.usage.outputTokens, color: Theme.accentPurple)
+            tokenBar(label: "Cache Created", value: session.usage.cacheCreationTokens, color: Theme.accentOrange)
+            tokenBar(label: "Cache Read", value: session.usage.cacheReadTokens, color: Theme.accentTeal)
 
-            Divider()
+            Divider().overlay(Theme.cardBorder)
 
             HStack {
-                Text("Total")
-                    .fontWeight(.medium)
+                Text("Total").fontWeight(.medium).foregroundStyle(Theme.textSecondary)
                 Spacer()
-                Text(formatTokens(session.totalTokens))
-                    .fontWeight(.bold)
-                    .monospacedDigit()
+                Text(fmtTokens(session.totalTokens)).fontWeight(.bold).monospacedDigit().foregroundStyle(Theme.textPrimary)
             }
             .font(.subheadline)
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -188,17 +185,15 @@ struct SessionDetailView: View {
 
         return VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(label)
-                    .font(.caption)
+                Text(label).font(.caption).foregroundStyle(Theme.textSecondary)
                 Spacer()
-                Text(formatTokens(value))
-                    .font(.caption)
-                    .monospacedDigit()
+                Text(fmtTokens(value)).font(.caption).monospacedDigit().foregroundStyle(Theme.textPrimary)
             }
             GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(color)
-                    .frame(width: max(geo.size.width * ratio, 2))
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3).fill(Color.white.opacity(0.05)).frame(height: 6)
+                    RoundedRectangle(cornerRadius: 3).fill(color).frame(width: max(geo.size.width * ratio, 2), height: 6)
+                }
             }
             .frame(height: 6)
         }
@@ -208,28 +203,22 @@ struct SessionDetailView: View {
 
     var modelsUsedView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Models Used")
-                .font(.headline)
+            Text("Models Used").font(.headline).foregroundStyle(Theme.textPrimary)
 
             let totalTokens = session.totalTokens
             ForEach(Array(session.modelsUsed.sorted { $0.value.totalTokens > $1.value.totalTokens }), id: \.key) { model, usage in
                 HStack {
-                    Circle()
-                        .fill(modelColor(model))
-                        .frame(width: 8, height: 8)
-                    Text(shortModel(model))
-                        .font(.subheadline)
+                    Circle().fill(modelColor(model)).frame(width: 8, height: 8)
+                    Text(shortModel(model)).font(.subheadline).foregroundStyle(Theme.textPrimary)
                     Spacer()
                     let pct = totalTokens > 0 ? Double(usage.totalTokens) / Double(totalTokens) * 100 : 0
-                    Text(String(format: "%.0f%%", pct))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
+                    Text(String(format: "%.0f%%", pct)).font(.caption).foregroundStyle(Theme.textSecondary).monospacedDigit()
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -237,86 +226,70 @@ struct SessionDetailView: View {
 
     var activityLog: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Activity Log")
-                .font(.headline)
+            Text("Activity Log").font(.headline).foregroundStyle(Theme.textPrimary)
 
             let logEntries = session.entries.prefix(50)
             if logEntries.isEmpty {
-                Text("No activity recorded")
-                    .foregroundStyle(.secondary)
+                Text("No activity recorded").foregroundStyle(Theme.textSecondary)
             } else {
                 ForEach(Array(logEntries)) { entry in
                     HStack(spacing: 8) {
                         Text(formatTime(entry.timestamp))
-                            .font(.caption)
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
+                            .font(.caption).monospacedDigit().foregroundStyle(Theme.textTertiary)
                             .frame(width: 60, alignment: .leading)
 
                         Image(systemName: entryIcon(entry))
-                            .font(.caption)
-                            .foregroundStyle(entryColor(entry))
-                            .frame(width: 16)
+                            .font(.caption).foregroundStyle(entryColor(entry)).frame(width: 16)
 
                         Text(entryDescription(entry))
-                            .font(.caption)
-                            .lineLimit(1)
+                            .font(.caption).lineLimit(1).foregroundStyle(Theme.textSecondary)
 
                         Spacer()
 
                         if let usage = entry.usage {
-                            Text(formatTokens(usage.totalTokens))
-                                .font(.caption2)
-                                .monospacedDigit()
-                                .foregroundStyle(.secondary)
+                            Text(fmtTokens(usage.totalTokens))
+                                .font(.caption2).monospacedDigit().foregroundStyle(Theme.textTertiary)
                         }
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 3)
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - Helpers
 
-    private func shortModel(_ model: String) -> String {
-        model.replacingOccurrences(of: "claude-", with: "").replacingOccurrences(of: "-20251001", with: "")
+    private func shortModel(_ m: String) -> String { m.replacingOccurrences(of: "claude-", with: "").replacingOccurrences(of: "-20251001", with: "") }
+
+    private func modelColor(_ m: String) -> Color {
+        if m.contains("opus") { return Theme.accentPurple }
+        if m.contains("sonnet") { return Theme.accentBlue }
+        if m.contains("haiku") { return Theme.accentTeal }
+        return Theme.accentOrange
     }
 
-    private func modelColor(_ model: String) -> Color {
-        if model.contains("opus") { return .purple }
-        if model.contains("sonnet") { return .blue }
-        if model.contains("haiku") { return .teal }
-        return .orange
-    }
-
-    private func formatTokens(_ tokens: Int64) -> String {
-        if tokens >= 1_000_000_000 { return String(format: "%.2fB", Double(tokens) / 1_000_000_000) }
-        if tokens >= 1_000_000 { return String(format: "%.1fM", Double(tokens) / 1_000_000) }
-        if tokens >= 1_000 { return String(format: "%.1fK", Double(tokens) / 1_000) }
-        return "\(tokens)"
+    private func fmtTokens(_ t: Int64) -> String {
+        if t >= 1_000_000_000 { return String(format: "%.2fB", Double(t) / 1_000_000_000) }
+        if t >= 1_000_000 { return String(format: "%.1fM", Double(t) / 1_000_000) }
+        if t >= 1_000 { return String(format: "%.1fK", Double(t) / 1_000) }
+        return "\(t)"
     }
 
     private func formatFullDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd HH:mm"
-        return f.string(from: date)
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"; return f.string(from: date)
     }
 
     private func formatDuration(_ interval: TimeInterval) -> String {
-        let h = Int(interval) / 3600
-        let m = (Int(interval) % 3600) / 60
-        if h > 0 { return "\(h)h \(m)m" }
-        return "\(m)m"
+        let h = Int(interval) / 3600; let m = (Int(interval) % 3600) / 60
+        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
     }
 
     private func formatTime(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "HH:mm"
-        return f.string(from: date)
+        let f = DateFormatter(); f.dateFormat = "HH:mm"; return f.string(from: date)
     }
 
     private func entryIcon(_ entry: SessionEntry) -> String {
@@ -330,10 +303,10 @@ struct SessionDetailView: View {
 
     private func entryColor(_ entry: SessionEntry) -> Color {
         switch entry.type {
-        case .assistant: return .purple
-        case .toolUse: return .blue
-        case .user: return .green
-        default: return .secondary
+        case .assistant: return Theme.accentPurple
+        case .toolUse: return Theme.accentBlue
+        case .user: return Theme.accentGreen
+        default: return Theme.textTertiary
         }
     }
 
