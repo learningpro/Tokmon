@@ -18,31 +18,46 @@
 
 Tokmon reads Claude Code's local JSONL session files and gives you a clear picture of your token consumption, costs, cache efficiency, and model usage — all in a native SwiftUI interface.
 
+## Screenshots
+
+### Dashboard
+<img src="screenshots/dashboard.png" width="800" alt="Dashboard">
+
+### Projects
+<img src="screenshots/projects.png" width="800" alt="Projects">
+
+### Models
+<img src="screenshots/models.png" width="800" alt="Models">
+
+### Sessions
+<img src="screenshots/sessions.png" width="800" alt="Sessions">
+
+### Settings
+<img src="screenshots/settings.png" width="800" alt="Settings">
+
 ## Features
 
-- **Dashboard** — Summary cards (total cost, tokens, cache hit rate, sessions), daily usage bar chart, model distribution pie chart
-- **Projects** — Stacked area chart by project, sortable project table with expandable session details
-- **Models** — Cost breakdown and token distribution per model, detailed stats cards
+- **Dashboard** — Summary cards (total cost, tokens, cache hit rate, sessions), daily usage bar chart with hover tooltip, model distribution pie chart
+- **Projects** — Stacked area chart by project with hover tooltip, sortable project table with expandable session details
+- **Models** — Cost breakdown and token distribution per model with hover tooltips, detailed stats cards
 - **Sessions** — Searchable/sortable session list, detailed session view with token timeline, activity log
 - **Custom Date Range** — Quick presets (7D/14D/30D/All) + custom date picker
 - **Editable Pricing** — Customize per-model token pricing in Settings
 - **Bilingual** — English / 中文 switchable
 - **Dark/Light Theme** — Follows system or manual override
 
-## Requirements
+## Install
 
-- macOS 14.0 (Sonoma) or later
-- Xcode 16+ (for building)
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (for generating the Xcode project)
+Download the latest DMG from [Releases](https://github.com/learningpro/Tokmon/releases), open it, and drag Tokmon to Applications.
 
-## Build & Run
+## Build from Source
 
 ```bash
 # Install XcodeGen if needed
 brew install xcodegen
 
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/Tokmon.git
+git clone https://github.com/learningpro/Tokmon.git
 cd Tokmon
 
 # Generate Xcode project
