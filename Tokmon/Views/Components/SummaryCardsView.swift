@@ -11,28 +11,28 @@ struct SummaryCardsView: View {
                 value: formatCost(appState.totalCost),
                 subtitle: l10n.t("this month"),
                 icon: "dollarsign.circle.fill",
-                color: .green
+                color: Theme.accentGreen
             )
             SummaryCard(
                 title: l10n.t("Total Tokens"),
                 value: formatTokens(appState.totalTokens),
                 subtitle: l10n.t("lifetime total"),
                 icon: "number.circle.fill",
-                color: .blue
+                color: Theme.accentBlue
             )
             SummaryCard(
                 title: l10n.t("Cache Hit Rate"),
                 value: String(format: "%.1f%%", appState.cacheHitRate),
                 subtitle: l10n.t("read / total"),
                 icon: "bolt.circle.fill",
-                color: .teal
+                color: Theme.accentTeal
             )
             SummaryCard(
                 title: l10n.t("Sessions"),
                 value: "\(appState.activeSessions)",
                 subtitle: "\(appState.filteredProjects.count) \(l10n.t("projects"))",
                 icon: "clock.circle.fill",
-                color: .purple
+                color: Theme.accentPurple
             )
         }
     }
@@ -59,16 +59,28 @@ struct SummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Image(systemName: icon).font(.title3).foregroundStyle(color)
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(color)
                 Spacer()
             }
-            Text(value).font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(.primary)
-            Text(title).font(.subheadline).foregroundStyle(.secondary)
-            Text(subtitle).font(.caption).foregroundStyle(.tertiary)
+            Text(value)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(Theme.textPrimary)
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(Theme.textSecondary)
+            Text(subtitle)
+                .font(.caption)
+                .foregroundStyle(color.opacity(0.8))
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.ultraThinMaterial)
+        .background(Theme.cardBg)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Theme.cardBorder, lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

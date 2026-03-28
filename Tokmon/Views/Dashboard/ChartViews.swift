@@ -10,7 +10,9 @@ struct DailyUsageChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(l10n.t("Daily Token Usage")).font(.headline)
+            Text(l10n.t("Daily Token Usage"))
+                .font(.headline)
+                .foregroundStyle(Theme.textPrimary)
 
             ZStack(alignment: .topLeading) {
                 Chart(dailyData) { day in
@@ -18,26 +20,29 @@ struct DailyUsageChartView: View {
                         x: .value("Date", day.date, unit: .day),
                         y: .value("Tokens", day.usage.totalTokens)
                     )
-                    .foregroundStyle(LinearGradient(colors: [.blue, .purple], startPoint: .bottom, endPoint: .top))
+                    .foregroundStyle(
+                        LinearGradient(colors: Theme.chartGradient, startPoint: .bottom, endPoint: .top)
+                    )
                     .cornerRadius(4)
                     .opacity(selectedDate == nil ? 1.0 : (Calendar.current.isDate(day.date, inSameDayAs: selectedDate!) ? 1.0 : 0.4))
 
                     if let selectedDate, Calendar.current.isDate(day.date, inSameDayAs: selectedDate) {
                         RuleMark(x: .value("Selected", selectedDate, unit: .day))
-                            .foregroundStyle(.gray.opacity(0.3))
+                            .foregroundStyle(Color.white.opacity(0.2))
                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                     }
                 }
                 .chartXAxis {
                     AxisMarks(values: .stride(by: .day, count: 2)) { _ in
-                        AxisGridLine()
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.1))
                         AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                            .foregroundStyle(Theme.textTertiary)
                     }
                 }
                 .chartYAxis {
                     AxisMarks { value in
-                        AxisGridLine()
-                        AxisValueLabel { if let v = value.as(Int64.self) { Text(fmtTokens(v)) } }
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.1))
+                        AxisValueLabel { if let v = value.as(Int64.self) { Text(fmtTokens(v)).foregroundStyle(Theme.textTertiary) } }
                     }
                 }
                 .chartOverlay { proxy in
@@ -65,29 +70,36 @@ struct DailyUsageChartView: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func barTooltip(day: DailyUsage) -> some View {
         let f = DateFormatter(); f.dateFormat = "MMM d, yyyy"
         return VStack(alignment: .leading, spacing: 4) {
-            Text(f.string(from: day.date)).font(.caption).fontWeight(.bold)
-            HStack { Text("Tokens:").font(.caption2); Spacer(); Text(fmtTokens(day.usage.totalTokens)).font(.caption2).monospacedDigit() }
-            HStack { Text(l10n.t("Cost") + ":").font(.caption2); Spacer(); Text(String(format: "$%.2f", day.cost)).font(.caption2).monospacedDigit() }
+            Text(f.string(from: day.date)).font(.caption).fontWeight(.bold).foregroundStyle(Theme.textPrimary)
+            HStack { Text("Tokens:").font(.caption2).foregroundStyle(Theme.textSecondary); Spacer(); Text(fmtTokens(day.usage.totalTokens)).font(.caption2).monospacedDigit().foregroundStyle(Theme.textPrimary) }
+            HStack { Text("Cost:").font(.caption2).foregroundStyle(Theme.textSecondary); Spacer(); Text(String(format: "$%.2f", day.cost)).font(.caption2).monospacedDigit().foregroundStyle(Theme.accentGreen) }
             if !day.modelsUsed.isEmpty {
-                Divider()
+                Divider().overlay(Theme.cardBorder)
                 ForEach(Array(day.modelsUsed.sorted { $0.value.totalTokens > $1.value.totalTokens }), id: \.key) { model, usage in
                     HStack {
-                        Text(shortModel(model)).font(.caption2).foregroundStyle(.secondary)
+                        Text(shortModel(model)).font(.caption2).foregroundStyle(Theme.textTertiary)
                         Spacer()
-                        Text(fmtTokens(usage.totalTokens)).font(.caption2).monospacedDigit().foregroundStyle(.secondary)
+                        Text(fmtTokens(usage.totalTokens)).font(.caption2).monospacedDigit().foregroundStyle(Theme.textTertiary)
                     }
                 }
             }
         }
-        .padding(8).background(.ultraThickMaterial).clipShape(RoundedRectangle(cornerRadius: 8)).shadow(radius: 4).frame(width: 170).allowsHitTesting(false)
+        .padding(10)
+        .background(Theme.sidebarBg)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.cardBorder, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .shadow(color: .black.opacity(0.4), radius: 8)
+        .frame(width: 170)
+        .allowsHitTesting(false)
     }
 
     private func shortModel(_ m: String) -> String { m.replacingOccurrences(of: "claude-", with: "").replacingOccurrences(of: "-20251001", with: "") }
@@ -105,14 +117,14 @@ struct ModelDistributionChartView: View {
     @State private var hoveredModel: String?
     @State private var hoverLocation: CGPoint = .zero
 
-    private let colors: [Color] = [.purple, .blue, .teal, .orange, .pink, .green]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(l10n.t("Model Distribution")).font(.headline)
+            Text(l10n.t("Model Distribution"))
+                .font(.headline)
+                .foregroundStyle(Theme.textPrimary)
 
             if modelData.isEmpty {
-                Text("No data").foregroundStyle(.secondary).frame(maxWidth: .infinity, maxHeight: .infinity)
+                Text("No data").foregroundStyle(Theme.textSecondary).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ZStack(alignment: .topLeading) {
                     Chart(Array(modelData.enumerated()), id: \.element.model) { index, item in
@@ -121,7 +133,7 @@ struct ModelDistributionChartView: View {
                             innerRadius: .ratio(0.5),
                             angularInset: 1.5
                         )
-                        .foregroundStyle(colors[index % colors.count])
+                        .foregroundStyle(Theme.modelColors[index % Theme.modelColors.count])
                         .cornerRadius(4)
                         .opacity(hoveredModel == nil ? 1.0 : (hoveredModel == item.model ? 1.0 : 0.4))
                     }
@@ -131,55 +143,42 @@ struct ModelDistributionChartView: View {
                                 .onContinuousHover { phase in
                                     switch phase {
                                     case .active(let loc):
-                                        hoverLocation = CGPoint(x: loc.x, y: loc.y)
-                                        // Determine which sector by angle
+                                        hoverLocation = loc
                                         let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-                                        let dx = loc.x - center.x
-                                        let dy = loc.y - center.y
+                                        let dx = loc.x - center.x; let dy = loc.y - center.y
                                         let dist = sqrt(dx * dx + dy * dy)
                                         let outerR = min(geo.size.width, geo.size.height) / 2
-                                        let innerR = outerR * 0.5
-                                        if dist >= innerR && dist <= outerR {
-                                            var angle = atan2(dx, -dy) // 0 at top, clockwise
-                                            if angle < 0 { angle += 2 * .pi }
+                                        if dist >= outerR * 0.5 && dist <= outerR {
+                                            var angle = atan2(dx, -dy); if angle < 0 { angle += 2 * .pi }
                                             let totalTokens = modelData.reduce(0 as Int64) { $0 + $1.tokens }
-                                            var cumAngle: Double = 0
-                                            hoveredModel = nil
+                                            var cumAngle: Double = 0; hoveredModel = nil
                                             for item in modelData {
                                                 let sliceAngle = Double(item.tokens) / Double(totalTokens) * 2 * .pi
-                                                if angle >= cumAngle && angle < cumAngle + sliceAngle {
-                                                    hoveredModel = item.model
-                                                    break
-                                                }
+                                                if angle >= cumAngle && angle < cumAngle + sliceAngle { hoveredModel = item.model; break }
                                                 cumAngle += sliceAngle
                                             }
-                                        } else {
-                                            hoveredModel = nil
-                                        }
-                                    case .ended:
-                                        hoveredModel = nil
+                                        } else { hoveredModel = nil }
+                                    case .ended: hoveredModel = nil
                                     }
                                 }
                         }
                     }
                     .frame(height: 160)
 
-                    // Floating tooltip near mouse
-                    if let hovered = hoveredModel,
-                       let item = modelData.first(where: { $0.model == hovered }) {
+                    if let hovered = hoveredModel, let item = modelData.first(where: { $0.model == hovered }) {
                         pieTooltip(item: item)
-                            .offset(x: max(0, min(hoverLocation.x + 12, 80)), y: max(0, hoverLocation.y + 12))
+                            .offset(x: max(0, min(hoverLocation.x + 12, 100)), y: max(0, hoverLocation.y + 12))
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(modelData.enumerated()), id: \.element.model) { index, item in
                         HStack(spacing: 6) {
-                            Circle().fill(colors[index % colors.count]).frame(width: 8, height: 8)
-                            Text(shortName(item.model)).font(.caption)
+                            Circle().fill(Theme.modelColors[index % Theme.modelColors.count]).frame(width: 8, height: 8)
+                            Text(shortName(item.model)).font(.caption).foregroundStyle(Theme.textPrimary)
                             Spacer()
-                            Text(String(format: "$%.2f", item.cost)).font(.caption).monospacedDigit().foregroundStyle(.secondary)
-                            Text(pct(item.tokens)).font(.caption).foregroundStyle(.secondary)
+                            Text(String(format: "$%.2f", item.cost)).font(.caption).monospacedDigit().foregroundStyle(Theme.textSecondary)
+                            Text(pct(item.tokens)).font(.caption).foregroundStyle(Theme.textTertiary)
                         }
                         .contentShape(Rectangle())
                         .onHover { hovering in hoveredModel = hovering ? item.model : nil }
@@ -187,25 +186,29 @@ struct ModelDistributionChartView: View {
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func pieTooltip(item: (model: String, tokens: Int64, cost: Double)) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(shortName(item.model)).font(.caption).fontWeight(.bold)
-            HStack { Text("Tokens:").font(.caption2); Spacer(); Text(fmtTokens(item.tokens)).font(.caption2).monospacedDigit() }
-            HStack { Text(l10n.t("Cost") + ":").font(.caption2); Spacer(); Text(String(format: "$%.2f", item.cost)).font(.caption2).monospacedDigit() }
-            HStack { Text(pct(item.tokens)).font(.caption2).foregroundStyle(.secondary) }
+            Text(shortName(item.model)).font(.caption).fontWeight(.bold).foregroundStyle(Theme.textPrimary)
+            HStack { Text("Tokens:").font(.caption2).foregroundStyle(Theme.textSecondary); Spacer(); Text(fmtTokens(item.tokens)).font(.caption2).monospacedDigit().foregroundStyle(Theme.textPrimary) }
+            HStack { Text("Cost:").font(.caption2).foregroundStyle(Theme.textSecondary); Spacer(); Text(String(format: "$%.2f", item.cost)).font(.caption2).monospacedDigit().foregroundStyle(Theme.accentGreen) }
+            Text(pct(item.tokens)).font(.caption2).foregroundStyle(Theme.textTertiary)
         }
-        .padding(8).background(.ultraThickMaterial).clipShape(RoundedRectangle(cornerRadius: 8)).shadow(radius: 4).frame(width: 150).allowsHitTesting(false)
+        .padding(8).background(Theme.sidebarBg)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.cardBorder, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .shadow(color: .black.opacity(0.4), radius: 8)
+        .frame(width: 150).allowsHitTesting(false)
     }
 
     private func shortName(_ m: String) -> String { m.replacingOccurrences(of: "claude-", with: "").replacingOccurrences(of: "-20251001", with: "") }
     private func pct(_ tokens: Int64) -> String {
-        let total = modelData.reduce(0) { $0 + $1.tokens }
-        guard total > 0 else { return "0%" }
+        let total = modelData.reduce(0) { $0 + $1.tokens }; guard total > 0 else { return "0%" }
         return String(format: "%.0f%%", Double(tokens) / Double(total) * 100)
     }
     private func fmtTokens(_ t: Int64) -> String {

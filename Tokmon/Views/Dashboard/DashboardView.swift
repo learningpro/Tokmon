@@ -11,6 +11,7 @@ struct DashboardView: View {
                     Text(l10n.t("Dashboard"))
                         .font(.largeTitle)
                         .fontWeight(.bold)
+                        .foregroundStyle(Theme.textPrimary)
                     Spacer()
                     TimeRangePicker(startDate: $appState.startDate, endDate: $appState.endDate)
                 }
@@ -32,14 +33,15 @@ struct DashboardView: View {
                         ModelDistributionChartView(
                             modelData: StatsEngine.modelDistribution(from: appState.filteredSessions)
                         )
-                        .frame(width: 260)
+                        .frame(width: 280)
                     }
 
                     RecentSessionsView(sessions: Array(appState.filteredSessions.sorted { $0.timestamp > $1.timestamp }.prefix(5)))
                 }
             }
-            .padding()
+            .padding(24)
         }
+        .background(Theme.mainBg)
     }
 }
 
@@ -49,33 +51,56 @@ struct RecentSessionsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(l10n.t("Recent Sessions")).font(.headline)
+            Text(l10n.t("Recent Sessions"))
+                .font(.headline)
+                .foregroundStyle(Theme.textPrimary)
 
             if sessions.isEmpty {
-                Text(l10n.t("No sessions yet")).foregroundStyle(.secondary)
+                Text(l10n.t("No sessions yet"))
+                    .foregroundStyle(Theme.textSecondary)
             } else {
                 ForEach(sessions) { session in
                     HStack {
-                        Image(systemName: "chevron.right.circle.fill").foregroundStyle(.blue)
+                        Image(systemName: "play.circle.fill")
+                            .foregroundStyle(Theme.accentBlue)
+
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(session.projectPath).font(.subheadline).fontWeight(.medium)
+                            Text(session.projectPath)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(Theme.textPrimary)
                             if let branch = session.gitBranch {
-                                Text(branch).font(.caption).foregroundStyle(.secondary)
+                                Text(branch)
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.textTertiary)
                             }
                         }
+
                         Spacer()
+
                         if let duration = session.duration {
-                            Text(formatDuration(duration)).font(.caption).foregroundStyle(.secondary)
+                            Text(formatDuration(duration))
+                                .font(.caption)
+                                .foregroundStyle(Theme.textSecondary)
                         }
-                        Text(formatCost(session.totalCost)).font(.subheadline).fontWeight(.medium).monospacedDigit()
+
+                        Text(formatCost(session.totalCost))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.textPrimary)
                     }
-                    .padding(.vertical, 4)
-                    if session.id != sessions.last?.id { Divider() }
+                    .padding(.vertical, 6)
+
+                    if session.id != sessions.last?.id {
+                        Divider().overlay(Theme.cardBorder)
+                    }
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 

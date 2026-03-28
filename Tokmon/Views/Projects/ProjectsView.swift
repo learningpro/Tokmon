@@ -10,18 +10,14 @@ struct ProjectsView: View {
     var filteredProjects: [Project] {
         let base = appState.filteredProjects
         if searchText.isEmpty { return base }
-        return base.filter {
-            $0.displayName.localizedCaseInsensitiveContains(searchText)
-        }
+        return base.filter { $0.displayName.localizedCaseInsensitiveContains(searchText) }
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 HStack {
-                    Text(l10n.t("Projects"))
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                    Text(l10n.t("Projects")).font(.largeTitle).fontWeight(.bold).foregroundStyle(Theme.textPrimary)
                     Spacer()
                     TimeRangePicker(startDate: $appState.startDate, endDate: $appState.endDate)
                 }
@@ -31,17 +27,18 @@ struct ProjectsView: View {
                 } else {
                     ProjectStackedChartView(sessions: appState.filteredSessions, projects: appState.filteredProjects, days: appState.dayCount)
 
+                    // Project table
                     VStack(alignment: .leading, spacing: 0) {
                         HStack {
-                            Text(l10n.t("All Projects"))
-                                .font(.headline)
+                            Text(l10n.t("All Projects")).font(.headline).foregroundStyle(Theme.textPrimary)
                             Spacer()
                             TextField(l10n.t("Search projects..."), text: $searchText)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 200)
                         }
-                        .padding()
+                        .padding(16)
 
+                        // Header
                         HStack(spacing: 0) {
                             Text(l10n.t("Project Name")).frame(maxWidth: .infinity, alignment: .leading)
                             Text(l10n.t("Total Tokens Col")).frame(width: 120, alignment: .trailing)
@@ -51,12 +48,12 @@ struct ProjectsView: View {
                             Spacer().frame(width: 30)
                         }
                         .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal)
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(.quaternary.opacity(0.3))
+                        .background(Color.white.opacity(0.03))
 
-                        Divider()
+                        Divider().overlay(Theme.cardBorder)
 
                         ForEach(filteredProjects) { project in
                             VStack(spacing: 0) {
@@ -74,24 +71,28 @@ struct ProjectsView: View {
                                         SessionSubRow(session: session)
                                     }
                                 }
-                                Divider()
+                                Divider().overlay(Theme.cardBorder)
                             }
                         }
-                    }
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                    HStack {
-                        Text("\(l10n.t("Total Token Usage:")) \(formatTokens(appState.totalTokens))")
-                            .font(.caption).foregroundStyle(.secondary)
-                        Spacer()
-                        Text(l10n.t("Last Updated: Just now"))
-                            .font(.caption).foregroundStyle(.secondary)
+                        // Footer
+                        HStack {
+                            Text("\(l10n.t("Total Token Usage:")) \(formatTokens(appState.totalTokens))")
+                                .font(.caption).foregroundStyle(Theme.textTertiary)
+                            Spacer()
+                            Text(l10n.t("Last Updated: Just now"))
+                                .font(.caption).foregroundStyle(Theme.textTertiary)
+                        }
+                        .padding(12)
                     }
+                    .background(Theme.cardBg)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
-            .padding()
+            .padding(24)
         }
+        .background(Theme.mainBg)
     }
 
     private func formatTokens(_ tokens: Int64) -> String {
@@ -109,22 +110,22 @@ struct ProjectRow: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: "folder.fill").foregroundStyle(.blue)
-                Text(project.displayName).fontWeight(.medium)
+                Image(systemName: "folder.fill").foregroundStyle(Theme.accentBlue)
+                Text(project.displayName).fontWeight(.medium).foregroundStyle(Theme.textPrimary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(formatTokens(project.totalTokens)).monospacedDigit().frame(width: 120, alignment: .trailing)
-            Text(String(format: "$%.2f", project.totalCost)).monospacedDigit().frame(width: 100, alignment: .trailing)
-            Text("\(project.sessionCount)").monospacedDigit().frame(width: 80, alignment: .trailing)
-            Text(formatDate(project.lastActive)).frame(width: 120, alignment: .trailing)
+            Text(formatTokens(project.totalTokens)).monospacedDigit().foregroundStyle(Theme.textPrimary).frame(width: 120, alignment: .trailing)
+            Text(String(format: "$%.2f", project.totalCost)).monospacedDigit().foregroundStyle(Theme.textPrimary).frame(width: 100, alignment: .trailing)
+            Text("\(project.sessionCount)").monospacedDigit().foregroundStyle(Theme.textSecondary).frame(width: 80, alignment: .trailing)
+            Text(formatDate(project.lastActive)).foregroundStyle(Theme.textSecondary).frame(width: 120, alignment: .trailing)
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                .font(.caption).foregroundStyle(.secondary).frame(width: 30)
+                .font(.caption).foregroundStyle(Theme.textTertiary).frame(width: 30)
         }
         .font(.subheadline)
-        .padding(.horizontal).padding(.vertical, 10)
+        .padding(.horizontal, 16).padding(.vertical, 10)
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
-        .background(isExpanded ? Color.accentColor.opacity(0.05) : Color.clear)
+        .background(isExpanded ? Theme.accentBlue.opacity(0.08) : Color.clear)
     }
 
     private func formatTokens(_ tokens: Int64) -> String {
@@ -148,22 +149,22 @@ struct SessionSubRow: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 8) {
-                Image(systemName: "clock").foregroundStyle(.secondary).font(.caption)
+                Image(systemName: "clock").foregroundStyle(Theme.textTertiary).font(.caption)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Session: \(String(session.id.prefix(8)))").font(.caption)
+                    Text("Session: \(String(session.id.prefix(8)))").font(.caption).foregroundStyle(Theme.textSecondary)
                     if let branch = session.gitBranch {
-                        Text(branch).font(.caption2).foregroundStyle(.secondary)
+                        Text(branch).font(.caption2).foregroundStyle(Theme.textTertiary)
                     }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(formatTokens(session.totalTokens)).font(.caption).monospacedDigit().frame(width: 120, alignment: .trailing)
-            Text(String(format: "$%.2f", session.totalCost)).font(.caption).monospacedDigit().frame(width: 100, alignment: .trailing)
-            Text(formatTimestamp(session.timestamp)).font(.caption).frame(width: 200, alignment: .trailing)
+            Text(formatTokens(session.totalTokens)).font(.caption).monospacedDigit().foregroundStyle(Theme.textSecondary).frame(width: 120, alignment: .trailing)
+            Text(String(format: "$%.2f", session.totalCost)).font(.caption).monospacedDigit().foregroundStyle(Theme.textSecondary).frame(width: 100, alignment: .trailing)
+            Text(formatTimestamp(session.timestamp)).font(.caption).foregroundStyle(Theme.textTertiary).frame(width: 200, alignment: .trailing)
             Spacer().frame(width: 30)
         }
-        .padding(.horizontal).padding(.vertical, 6)
-        .background(.quaternary.opacity(0.15))
+        .padding(.horizontal, 16).padding(.vertical, 6)
+        .background(Color.white.opacity(0.02))
     }
 
     private func formatTokens(_ tokens: Int64) -> String {
@@ -173,9 +174,7 @@ struct SessionSubRow: View {
     }
 
     private func formatTimestamp(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "MMM d, HH:mm"
-        return f.string(from: date)
+        let f = DateFormatter(); f.dateFormat = "MMM d, HH:mm"; return f.string(from: date)
     }
 }
 
@@ -188,47 +187,36 @@ struct ProjectStackedChartView: View {
     @State private var chartWidth: CGFloat = 600
 
     struct ChartEntry: Identifiable {
-        let id: String
-        let date: Date
-        let project: String
-        let tokens: Int64
+        let id: String; let date: Date; let project: String; let tokens: Int64
     }
 
     var chartData: [ChartEntry] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-
+        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
         let topProjects = Array(projects.sorted { $0.totalTokens > $1.totalTokens }.prefix(5))
         var result: [ChartEntry] = []
-
         for i in (0..<days).reversed() {
             guard let date = calendar.date(byAdding: .day, value: -i, to: today) else { continue }
-            let dayKey = dateFormatter.string(from: date)
+            let dayKey = df.string(from: date)
             for project in topProjects {
-                let dayTokens = project.sessions
-                    .filter { dateFormatter.string(from: $0.timestamp) == dayKey }
-                    .reduce(0 as Int64) { $0 + $1.totalTokens }
+                let dayTokens = project.sessions.filter { df.string(from: $0.timestamp) == dayKey }.reduce(0 as Int64) { $0 + $1.totalTokens }
                 result.append(ChartEntry(id: "\(dayKey)-\(project.displayName)", date: date, project: project.displayName, tokens: dayTokens))
             }
         }
         return result
     }
 
-    private let colors: [Color] = [.blue, .purple, .teal, .orange, .pink]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Token Usage by Project")
-                    .font(.headline)
+                Text("Token Usage by Project").font(.headline).foregroundStyle(Theme.textPrimary)
                 Spacer()
                 HStack(spacing: 12) {
                     ForEach(Array(projects.sorted { $0.totalTokens > $1.totalTokens }.prefix(5).enumerated()), id: \.element.id) { index, project in
                         HStack(spacing: 4) {
-                            Circle().fill(colors[index % colors.count]).frame(width: 8, height: 8)
-                            Text(project.displayName).font(.caption)
+                            Circle().fill(Theme.projectColors[index % Theme.projectColors.count]).frame(width: 8, height: 8)
+                            Text(project.displayName).font(.caption).foregroundStyle(Theme.textSecondary)
                         }
                     }
                 }
@@ -236,59 +224,40 @@ struct ProjectStackedChartView: View {
 
             ZStack(alignment: .topLeading) {
                 Chart(chartData) { item in
-                    AreaMark(
-                        x: .value("Date", item.date, unit: .day),
-                        y: .value("Tokens", item.tokens),
-                        stacking: .standard
-                    )
-                    .foregroundStyle(by: .value("Project", item.project))
-                    .interpolationMethod(.catmullRom)
-                    .opacity(selectedDate == nil ? 1.0 : (Calendar.current.isDate(item.date, inSameDayAs: selectedDate!) ? 1.0 : 0.5))
+                    AreaMark(x: .value("Date", item.date, unit: .day), y: .value("Tokens", item.tokens), stacking: .standard)
+                        .foregroundStyle(by: .value("Project", item.project))
+                        .interpolationMethod(.catmullRom)
+                        .opacity(selectedDate == nil ? 1.0 : (Calendar.current.isDate(item.date, inSameDayAs: selectedDate!) ? 1.0 : 0.5))
 
-                    if let selectedDate,
-                       Calendar.current.isDate(item.date, inSameDayAs: selectedDate),
-                       item.tokens > 0 {
+                    if let selectedDate, Calendar.current.isDate(item.date, inSameDayAs: selectedDate), item.tokens > 0 {
                         RuleMark(x: .value("Selected", selectedDate, unit: .day))
-                            .foregroundStyle(.gray.opacity(0.3))
+                            .foregroundStyle(Color.white.opacity(0.2))
                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                     }
                 }
-                .chartForegroundStyleScale(range: colors)
+                .chartForegroundStyleScale(range: Theme.projectColors)
                 .chartLegend(.hidden)
                 .chartXAxis {
                     AxisMarks(values: .stride(by: .day, count: 2)) { _ in
-                        AxisGridLine()
-                        AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.1))
+                        AxisValueLabel(format: .dateTime.month(.abbreviated).day()).foregroundStyle(Theme.textTertiary)
                     }
                 }
                 .chartYAxis {
                     AxisMarks { value in
-                        AxisGridLine()
-                        AxisValueLabel {
-                            if let v = value.as(Int64.self) {
-                                Text(formatAxisTokens(v))
-                            }
-                        }
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.1))
+                        AxisValueLabel { if let v = value.as(Int64.self) { Text(fmtAxisTokens(v)).foregroundStyle(Theme.textTertiary) } }
                     }
                 }
                 .chartOverlay { proxy in
                     GeometryReader { geo in
-                        Rectangle()
-                            .fill(.clear)
-                            .contentShape(Rectangle())
+                        Rectangle().fill(.clear).contentShape(Rectangle())
                             .onContinuousHover { phase in
                                 switch phase {
-                                case .active(let location):
-                                    hoverLocation = CGPoint(
-                                        x: location.x,
-                                        y: location.y
-                                    )
-                                    chartWidth = geo.size.width
-                                    if let date: Date = proxy.value(atX: location.x) {
-                                        selectedDate = Calendar.current.startOfDay(for: date)
-                                    }
-                                case .ended:
-                                    selectedDate = nil
+                                case .active(let loc):
+                                    hoverLocation = loc; chartWidth = geo.size.width
+                                    if let date: Date = proxy.value(atX: loc.x) { selectedDate = Calendar.current.startOfDay(for: date) }
+                                case .ended: selectedDate = nil
                                 }
                             }
                     }
@@ -298,64 +267,57 @@ struct ProjectStackedChartView: View {
                 if let selectedDate {
                     let dayEntries = chartData.filter { Calendar.current.isDate($0.date, inSameDayAs: selectedDate) && $0.tokens > 0 }
                     if !dayEntries.isEmpty {
-                        let tooltipW: CGFloat = 180
-                        let xOffset: CGFloat = hoverLocation.x + tooltipW + 20 > chartWidth
-                            ? hoverLocation.x - tooltipW - 12
-                            : hoverLocation.x + 12
+                        let tw: CGFloat = 180
+                        let xOff: CGFloat = hoverLocation.x + tw + 20 > chartWidth ? hoverLocation.x - tw - 12 : hoverLocation.x + 12
                         tooltipView(date: selectedDate, entries: dayEntries)
-                            .offset(x: max(0, xOffset), y: max(0, hoverLocation.y - 60))
+                            .offset(x: max(0, xOff), y: max(0, hoverLocation.y - 60))
                     }
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(16)
+        .background(Theme.cardBg)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func colorForProject(_ name: String) -> Color {
         let sorted = projects.sorted { $0.totalTokens > $1.totalTokens }.prefix(5)
-        if let idx = sorted.firstIndex(where: { $0.displayName == name }) {
-            return colors[idx % colors.count]
-        }
+        if let idx = sorted.firstIndex(where: { $0.displayName == name }) { return Theme.projectColors[idx % Theme.projectColors.count] }
         return .gray
     }
 
     private func tooltipView(date: Date, entries: [ChartEntry]) -> some View {
-        let f = DateFormatter()
-        f.dateFormat = "MMM d, yyyy"
+        let f = DateFormatter(); f.dateFormat = "MMM d, yyyy"
         let total = entries.reduce(0 as Int64) { $0 + $1.tokens }
-
         return VStack(alignment: .leading, spacing: 6) {
-            Text(f.string(from: date))
-                .font(.caption).fontWeight(.bold)
+            Text(f.string(from: date)).font(.caption).fontWeight(.bold).foregroundStyle(Theme.textPrimary)
             ForEach(entries) { entry in
                 HStack(spacing: 6) {
                     Circle().fill(colorForProject(entry.project)).frame(width: 6, height: 6)
-                    Text(entry.project).font(.caption2)
+                    Text(entry.project).font(.caption2).foregroundStyle(Theme.textSecondary)
                     Spacer()
-                    Text(formatAxisTokens(entry.tokens)).font(.caption2).monospacedDigit()
+                    Text(fmtAxisTokens(entry.tokens)).font(.caption2).monospacedDigit().foregroundStyle(Theme.textPrimary)
                 }
             }
-            Divider()
+            Divider().overlay(Theme.cardBorder)
             HStack {
-                Text("Total").font(.caption2).fontWeight(.medium)
+                Text("Total").font(.caption2).fontWeight(.medium).foregroundStyle(Theme.textSecondary)
                 Spacer()
-                Text(formatAxisTokens(total)).font(.caption2).fontWeight(.medium).monospacedDigit()
+                Text(fmtAxisTokens(total)).font(.caption2).fontWeight(.medium).monospacedDigit().foregroundStyle(Theme.textPrimary)
             }
         }
-        .padding(8)
-        .background(.ultraThickMaterial)
+        .padding(10).background(Theme.sidebarBg)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.cardBorder, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(radius: 4)
-        .frame(width: 180)
-        .allowsHitTesting(false)
+        .shadow(color: .black.opacity(0.4), radius: 8)
+        .frame(width: 180).allowsHitTesting(false)
     }
 
-    private func formatAxisTokens(_ tokens: Int64) -> String {
-        if tokens >= 1_000_000_000 { return String(format: "%.1fB", Double(tokens) / 1_000_000_000) }
-        if tokens >= 1_000_000 { return String(format: "%.0fM", Double(tokens) / 1_000_000) }
-        if tokens >= 1_000 { return String(format: "%.0fK", Double(tokens) / 1_000) }
-        return "\(tokens)"
+    private func fmtAxisTokens(_ t: Int64) -> String {
+        if t >= 1_000_000_000 { return String(format: "%.1fB", Double(t) / 1_000_000_000) }
+        if t >= 1_000_000 { return String(format: "%.0fM", Double(t) / 1_000_000) }
+        if t >= 1_000 { return String(format: "%.0fK", Double(t) / 1_000) }
+        return "\(t)"
     }
 }

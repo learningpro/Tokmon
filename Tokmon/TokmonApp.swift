@@ -4,7 +4,6 @@ import SwiftUI
 struct TokmonApp: App {
     @StateObject private var appState = AppState()
     @StateObject private var l10n = L10n.shared
-    @AppStorage("appearanceMode") private var appearanceMode: AppearanceMode = .system
 
     var body: some Scene {
         WindowGroup {
@@ -12,7 +11,7 @@ struct TokmonApp: App {
                 .environmentObject(appState)
                 .environmentObject(l10n)
                 .frame(minWidth: 900, minHeight: 600)
-                .preferredColorScheme(colorScheme)
+                .preferredColorScheme(.dark)
         }
         .windowStyle(.titleBar)
         .defaultSize(width: 1200, height: 800)
@@ -21,15 +20,7 @@ struct TokmonApp: App {
             SettingsView()
                 .environmentObject(appState)
                 .environmentObject(l10n)
-                .preferredColorScheme(colorScheme)
-        }
-    }
-
-    private var colorScheme: ColorScheme? {
-        switch appearanceMode {
-        case .system: return nil
-        case .light: return .light
-        case .dark: return .dark
+                .preferredColorScheme(.dark)
         }
     }
 }

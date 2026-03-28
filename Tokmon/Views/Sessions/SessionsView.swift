@@ -33,39 +33,31 @@ struct SessionsView: View {
     }
 
     var body: some View {
-        if let session = selectedSession {
-            SessionDetailView(session: session) {
-                selectedSession = nil
+        Group {
+            if let session = selectedSession {
+                SessionDetailView(session: session) { selectedSession = nil }
+            } else {
+                sessionListView
             }
-        } else {
-            sessionListView
         }
+        .background(Theme.mainBg)
     }
 
     var sessionListView: some View {
         VStack(spacing: 0) {
-            // Header
             HStack {
-                Text(l10n.t("Sessions"))
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-
+                Text(l10n.t("Sessions")).font(.largeTitle).fontWeight(.bold).foregroundStyle(Theme.textPrimary)
                 Spacer()
-
                 TimeRangePicker(startDate: $appState.startDate, endDate: $appState.endDate)
-
                 Picker(l10n.t("Sort"), selection: $sortOrder) {
-                    ForEach(SortOrder.allCases, id: \.self) { order in
-                        Text(l10n.t(order.rawValue)).tag(order)
-                    }
+                    ForEach(SortOrder.allCases, id: \.self) { order in Text(l10n.t(order.rawValue)).tag(order) }
                 }
                 .frame(width: 160)
-
                 TextField(l10n.t("Search..."), text: $searchText)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 200)
             }
-            .padding()
+            .padding(24)
 
             if filteredSessions.isEmpty {
                 ContentUnavailableView(l10n.t("No Sessions"), systemImage: "clock", description: Text(l10n.t("No session data found.")))
@@ -73,39 +65,29 @@ struct SessionsView: View {
             } else {
                 // Table header
                 HStack(spacing: 0) {
-                    Text(l10n.t("Project"))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text(l10n.t("Branch"))
-                        .frame(width: 150, alignment: .leading)
-                    Text(l10n.t("Models"))
-                        .frame(width: 150, alignment: .leading)
-                    Text(l10n.t("Tokens"))
-                        .frame(width: 100, alignment: .trailing)
-                    Text(l10n.t("Cost"))
-                        .frame(width: 80, alignment: .trailing)
-                    Text(l10n.t("Duration"))
-                        .frame(width: 80, alignment: .trailing)
-                    Text(l10n.t("Date"))
-                        .frame(width: 120, alignment: .trailing)
+                    Text(l10n.t("Project")).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(l10n.t("Branch")).frame(width: 150, alignment: .leading)
+                    Text(l10n.t("Models")).frame(width: 150, alignment: .leading)
+                    Text(l10n.t("Tokens")).frame(width: 100, alignment: .trailing)
+                    Text(l10n.t("Cost")).frame(width: 80, alignment: .trailing)
+                    Text(l10n.t("Duration")).frame(width: 80, alignment: .trailing)
+                    Text(l10n.t("Date")).frame(width: 120, alignment: .trailing)
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
+                .foregroundStyle(Theme.textTertiary)
+                .padding(.horizontal, 24)
                 .padding(.vertical, 8)
-                .background(.quaternary.opacity(0.3))
+                .background(Color.white.opacity(0.03))
 
-                Divider()
+                Divider().overlay(Theme.cardBorder)
 
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(filteredSessions) { session in
                             SessionListRow(session: session)
                                 .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedSession = session
-                                }
-
-                            Divider()
+                                .onTapGesture { selectedSession = session }
+                            Divider().overlay(Theme.cardBorder)
                         }
                     }
                 }
@@ -120,25 +102,18 @@ struct SessionListRow: View {
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 6) {
-                Image(systemName: "clock.fill")
-                    .foregroundStyle(.blue)
-                    .font(.caption)
-                Text(session.projectPath)
-                    .lineLimit(1)
+                Image(systemName: "circle.fill").foregroundStyle(Theme.accentBlue).font(.system(size: 6))
+                Text(session.projectPath).lineLimit(1).foregroundStyle(Theme.textPrimary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(session.gitBranch ?? "-")
-                .font(.caption)
-                .lineLimit(1)
-                .frame(width: 150, alignment: .leading)
+            Text(session.gitBranch ?? "-").font(.caption).lineLimit(1).foregroundStyle(Theme.textSecondary).frame(width: 150, alignment: .leading)
 
             HStack(spacing: 4) {
                 ForEach(Array(session.modelsUsed.keys.sorted()), id: \.self) { model in
                     Text(shortModel(model))
                         .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(modelColor(model).opacity(0.2))
                         .foregroundStyle(modelColor(model))
                         .clipShape(Capsule())
@@ -146,59 +121,43 @@ struct SessionListRow: View {
             }
             .frame(width: 150, alignment: .leading)
 
-            Text(formatTokens(session.totalTokens))
-                .monospacedDigit()
-                .frame(width: 100, alignment: .trailing)
-
-            Text(String(format: "$%.2f", session.totalCost))
-                .monospacedDigit()
-                .frame(width: 80, alignment: .trailing)
-
-            Text(formatDuration(session.duration))
-                .frame(width: 80, alignment: .trailing)
-
-            Text(formatDate(session.timestamp))
-                .frame(width: 120, alignment: .trailing)
+            Text(formatTokens(session.totalTokens)).monospacedDigit().foregroundStyle(Theme.textPrimary).frame(width: 100, alignment: .trailing)
+            Text(String(format: "$%.2f", session.totalCost)).monospacedDigit().foregroundStyle(Theme.textPrimary).frame(width: 80, alignment: .trailing)
+            Text(formatDuration(session.duration)).foregroundStyle(Theme.textSecondary).frame(width: 80, alignment: .trailing)
+            Text(formatDate(session.timestamp)).foregroundStyle(Theme.textSecondary).frame(width: 120, alignment: .trailing)
         }
         .font(.subheadline)
-        .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 24).padding(.vertical, 8)
+        .background(Theme.mainBg)
     }
 
-    private func shortModel(_ model: String) -> String {
-        if model.contains("opus") { return "opus" }
-        if model.contains("sonnet") { return "sonnet" }
-        if model.contains("haiku") { return "haiku" }
-        return String(model.prefix(8))
+    private func shortModel(_ m: String) -> String {
+        if m.contains("opus") { return "opus" }
+        if m.contains("sonnet") { return "sonnet" }
+        if m.contains("haiku") { return "haiku" }
+        return String(m.prefix(8))
     }
 
-    private func modelColor(_ model: String) -> Color {
-        if model.contains("opus") { return .purple }
-        if model.contains("sonnet") { return .blue }
-        if model.contains("haiku") { return .teal }
-        return .orange
+    private func modelColor(_ m: String) -> Color {
+        if m.contains("opus") { return Theme.accentPurple }
+        if m.contains("sonnet") { return Theme.accentBlue }
+        if m.contains("haiku") { return Theme.accentTeal }
+        return Theme.accentOrange
     }
 
-    private func formatTokens(_ tokens: Int64) -> String {
-        if tokens >= 1_000_000 {
-            return String(format: "%.1fM", Double(tokens) / 1_000_000)
-        } else if tokens >= 1_000 {
-            return String(format: "%.1fK", Double(tokens) / 1_000)
-        }
-        return "\(tokens)"
+    private func formatTokens(_ t: Int64) -> String {
+        if t >= 1_000_000 { return String(format: "%.1fM", Double(t) / 1_000_000) }
+        if t >= 1_000 { return String(format: "%.1fK", Double(t) / 1_000) }
+        return "\(t)"
     }
 
     private func formatDuration(_ interval: TimeInterval?) -> String {
         guard let interval else { return "-" }
-        let hours = Int(interval) / 3600
-        let minutes = (Int(interval) % 3600) / 60
-        if hours > 0 { return "\(hours)h \(minutes)m" }
-        return "\(minutes)m"
+        let h = Int(interval) / 3600; let m = (Int(interval) % 3600) / 60
+        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
     }
 
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, HH:mm"
-        return formatter.string(from: date)
+        let f = DateFormatter(); f.dateFormat = "MMM d, HH:mm"; return f.string(from: date)
     }
 }
