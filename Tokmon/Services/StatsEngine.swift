@@ -10,8 +10,8 @@ struct StatsEngine: Sendable {
         dateFormatter.dateFormat = "yyyy-MM-dd"
 
         for session in sessions {
-            let dayKey = dateFormatter.string(from: session.timestamp)
-            let dayStart = calendar.startOfDay(for: session.timestamp)
+            let dayKey = dateFormatter.string(from: session.lastTimestamp)
+            let dayStart = calendar.startOfDay(for: session.lastTimestamp)
 
             var daily = dailyMap[dayKey] ?? DailyUsage(id: dayKey, date: dayStart)
             daily.usage.add(session.usage)

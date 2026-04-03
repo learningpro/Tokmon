@@ -36,14 +36,14 @@ class AppState: ObservableObject {
     var filteredSessions: [Session] {
         let start = Calendar.current.startOfDay(for: startDate)
         let end = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: endDate))!
-        return sessions.filter { $0.timestamp >= start && $0.timestamp < end }
+        return sessions.filter { $0.lastTimestamp >= start && $0.timestamp < end }
     }
 
     var filteredProjects: [Project] {
         let start = Calendar.current.startOfDay(for: startDate)
         let end = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: endDate))!
         return projects.compactMap { project in
-            let filtered = project.sessions.filter { $0.timestamp >= start && $0.timestamp < end }
+            let filtered = project.sessions.filter { $0.lastTimestamp >= start && $0.timestamp < end }
             guard !filtered.isEmpty else { return nil }
             var p = project
             p.sessions = filtered

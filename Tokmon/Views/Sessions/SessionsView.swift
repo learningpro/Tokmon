@@ -24,8 +24,8 @@ struct SessionsView: View {
             }
         }
         switch sortOrder {
-        case .dateDesc: result.sort { $0.timestamp > $1.timestamp }
-        case .dateAsc: result.sort { $0.timestamp < $1.timestamp }
+        case .dateDesc: result.sort { $0.lastTimestamp > $1.lastTimestamp }
+        case .dateAsc: result.sort { $0.lastTimestamp < $1.lastTimestamp }
         case .costDesc: result.sort { $0.totalCost > $1.totalCost }
         case .tokensDesc: result.sort { $0.totalTokens > $1.totalTokens }
         }

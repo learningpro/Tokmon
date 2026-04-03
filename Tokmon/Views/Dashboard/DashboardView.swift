@@ -35,7 +35,7 @@ struct DashboardView: View {
                         .frame(width: 260)
                     }
 
-                    RecentSessionsView(sessions: Array(appState.filteredSessions.sorted { $0.timestamp > $1.timestamp }.prefix(5)))
+                    RecentSessionsView(sessions: Array(appState.filteredSessions.sorted { $0.lastTimestamp > $1.lastTimestamp }.prefix(5)))
                 }
             }
             .padding()

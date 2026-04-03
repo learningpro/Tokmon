@@ -70,7 +70,7 @@ struct ProjectsView: View {
                                     }
                                 }
                                 if expandedProjects.contains(project.id) {
-                                    ForEach(project.sessions.sorted(by: { $0.timestamp > $1.timestamp })) { session in
+                                    ForEach(project.sessions.sorted(by: { $0.lastTimestamp > $1.lastTimestamp })) { session in
                                         SessionSubRow(session: session)
                                     }
                                 }
@@ -208,7 +208,7 @@ struct ProjectStackedChartView: View {
             let dayKey = dateFormatter.string(from: date)
             for project in topProjects {
                 let dayTokens = project.sessions
-                    .filter { dateFormatter.string(from: $0.timestamp) == dayKey }
+                    .filter { dateFormatter.string(from: $0.lastTimestamp) == dayKey }
                     .reduce(0 as Int64) { $0 + $1.totalTokens }
                 result.append(ChartEntry(id: "\(dayKey)-\(project.displayName)", date: date, project: project.displayName, tokens: dayTokens))
             }

@@ -23,6 +23,7 @@ struct Session: Identifiable, Sendable {
     let projectDirName: String
     let projectPath: String
     let timestamp: Date
+    let lastTimestamp: Date
     let gitBranch: String?
     let version: String?
     var usage: TokenUsage = TokenUsage()
@@ -72,7 +73,7 @@ struct Project: Identifiable, Sendable {
     var totalTokens: Int64 { sessions.reduce(0) { $0 + $1.totalTokens } }
     var totalCost: Double { sessions.reduce(0) { $0 + $1.totalCost } }
     var sessionCount: Int { sessions.count }
-    var lastActive: Date? { sessions.map(\.timestamp).max() }
+    var lastActive: Date? { sessions.map(\.lastTimestamp).max() }
 
     var usage: TokenUsage {
         var total = TokenUsage()

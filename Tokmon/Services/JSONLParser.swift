@@ -76,6 +76,7 @@ actor JSONLParser {
         guard !lines.isEmpty else { return nil }
 
         var firstTimestamp: Date?
+        var lastTimestamp: Date?
         var gitBranch: String?
         var version: String?
         var usage = TokenUsage()
@@ -91,6 +92,7 @@ actor JSONLParser {
             let timestamp = timestampStr.flatMap { dateFormatter.date(from: $0) }
 
             if firstTimestamp == nil { firstTimestamp = timestamp }
+            if let ts = timestamp { lastTimestamp = ts }
             if gitBranch == nil { gitBranch = json["gitBranch"] as? String }
             if version == nil { version = json["version"] as? String }
 
@@ -146,6 +148,7 @@ actor JSONLParser {
             projectDirName: projectDirName,
             projectPath: projectPath,
             timestamp: firstTimestamp!,
+            lastTimestamp: lastTimestamp ?? firstTimestamp!,
             gitBranch: gitBranch,
             version: version,
             usage: usage,
